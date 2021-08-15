@@ -142,6 +142,14 @@ bot.command('start', async ctx => {
       await showError(err, ctx)
     }
     else {
+      if (docs.length == 0){
+        const newUser = new User({
+          id: ctx.chat.id,
+          first_name: ctx.chat.first_name,
+          last_name: ctx.chat.last_name,
+        });
+        await newUser.save();
+      }
       await bot.telegram.sendMessage(
         ctx.chat.id,
         "Salut, envoie-moi le numéro de l'envoi pour être notifié de son statut.\n\n/suivis – Pour voir les numéros enregistrés"

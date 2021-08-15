@@ -27,6 +27,7 @@
   "dependencies": {
     "dateformat": "^4.5.1",
     "dotenv": "^10.0.0",
+    "express": "^4.17.1",
     "mongoose": "^5.13.7",
     "request": "^2.88.2",
     "telegraf": "^4.4.1",

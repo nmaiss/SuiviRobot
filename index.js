@@ -137,7 +137,7 @@ setInterval(async function () {
 }, 1 * 60 * 60 * 1000); // 1 hour
 
 setInterval(async function () {
-  var nbUsers, nbTrackings;
+  var nbUsers = 0, nbTrackings = 0;
   await User.find({}, async function (err, docs) {
     if (!err){
       nbUsers = docs.length;
@@ -161,7 +161,7 @@ setInterval(async function () {
 }, 1 * 60 * 60 * 1000 * 24);
 
 bot.command('stats', async ctx => {
-  var nbUsers, nbTrackings;
+  var nbUsers = 0, nbTrackings = 0;
   await User.find({}, async function (err, docs) {
     if (!err){
       nbUsers = docs.length;

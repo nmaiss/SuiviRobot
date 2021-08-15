@@ -1,4 +1,4 @@
-# [@SuiviPosteBot](https://t.me/suivipostebot) Telegram bot code
+# [@SuiviRobot](https://t.me/suivirobot) Telegram bot code
 
 Ce bot (non officiel) vous permet de suivre facilement vos lettres et colis en les enregistrant et recevant des notifications sans sortir de Telegram.
 ## Installation

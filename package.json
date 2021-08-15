@@ -1,0 +1,36 @@
+{
+  "name": "suivirobot",
+  "version": "1.0.0",
+  "description": "Ce bot telegram vous permet de suivre vos colis et lettres.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmaiss/SuiviRobot.git"
+  },
+  "keywords": [
+    "telegram",
+    "poste",
+    "bot",
+    "suivi",
+    "colis",
+    "lettre"
+  ],
+  "author": "Nicolas Maissouradze",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nmaiss/SuiviRobot/issues"
+  },
+  "homepage": "https://github.com/nmaiss/SuiviRobot#readme",
+  "dependencies": {
+    "dateformat": "^4.5.1",
+    "dotenv": "^10.0.0",
+    "mongoose": "^5.13.7",
+    "request": "^2.88.2",
+    "telegraf": "^4.4.1",
+    "telegraf-callback-data": "^0.2.4",
+    "telegram-keyboard": "^2.2.6"
+  }
+}

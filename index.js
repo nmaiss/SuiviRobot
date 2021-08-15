@@ -22,7 +22,7 @@ var dateFormat = require('dateformat');
 
 const savingData = new CallbackData(
   'saving',
-  ['user_id', 'number']
+  ['user_id', 'number', 'type']
 );
 
 const bot = new Telegraf(process.env.TOKEN);
@@ -44,7 +44,7 @@ trackingSchema = new Schema({
 User = mongoose.model('User', userSchema)
 Tracking = mongoose.model('Tracking', trackingSchema)
 
-var currentID, callbackData, currentNotitfy = true;
+var currentID, callbackData, currentNotitfy = true, callbackDeleteData;
 
 var setTrackingName = new Scenes.WizardScene(
   "setTrackingName",
@@ -65,7 +65,7 @@ var setTrackingName = new Scenes.WizardScene(
     await newTracking.save();
     await ctx.reply("Le numéro de suivi a été enregistré. Vous serez notifié de son statut directement ici.").catch(error => showError(error, ctx))
 
-    return await ctx.scene.leave().catch(error => functions.error(error, ctx));
+    return await ctx.scene.leave().catch(error => showError(error, ctx));
   },
 );
 
@@ -87,7 +87,7 @@ async function showError(err, ctx){
 setInterval(async function () {
   await Tracking.find({}, async function(err, trackings){
     if (err){
-      await functions.error(err, ctx)
+      await showError(err, ctx)
     } else{
       await trackings.forEach( async (item, i) => {
         if (item.notify){
@@ -126,15 +126,63 @@ setInterval(async function () {
                       parse_mode: 'HTML',
                       disable_web_page_preview: true,
                     },
-                  ).catch(error => functions.error(error, ctx)) 
+                  ).catch(error => showError(error, ctx))
                 }
               }
           });
         }
       });
     }
-  }) 
+  })
 }, 1 * 60 * 60 * 1000); // 1 hour
+
+setInterval(async function () {
+  var nbUsers, nbTrackings;
+  await User.find({}, async function (err, docs) {
+    if (!err){
+      nbUsers = docs.length;
+    }
+    else{
+      functions.error(err, ctx)
+    }
+  });
+  await Tracking.find({}, async function (err, docs) {
+    if (!err){
+      nbTrackings = docs.length;
+    }
+    else{
+      functions.error(err, ctx)
+    }
+  });
+  await bot.telegram.sendMessage(
+    ctx.chat.id,
+    "Nombre d'utilisateurs : " + nbUsers.toString() + "\nNombre de suivis : " + nbTrackings.toString()
+  ).catch(error => functions.error(error, ctx))
+}, 1 * 60 * 60 * 1000 * 24);
+
+bot.command('stats', async ctx => {
+  var nbUsers, nbTrackings;
+  await User.find({}, async function (err, docs) {
+    if (!err){
+      nbUsers = docs.length;
+    }
+    else{
+      functions.error(err, ctx)
+    }
+  });
+  await Tracking.find({}, async function (err, docs) {
+    if (!err){
+      nbTrackings = docs.length;
+    }
+    else{
+      functions.error(err, ctx)
+    }
+  });
+  await bot.telegram.sendMessage(
+    ctx.chat.id,
+    "Nombre d'utilisateurs : " + nbUsers.toString() + "\nNombre de suivis : " + nbTrackings.toString()
+  ).catch(error => functions.error(error, ctx))
+});
 
 bot.command('start', async ctx => {
   await User.find({ id: ctx.chat.id}, async function (err, docs) {
@@ -161,7 +209,7 @@ bot.command('start', async ctx => {
 bot.command('suivis', async ctx => {
   await Tracking.find({creator: ctx.chat.id}, async function(err, trackings){
     if (err){
-      await functions.error(err, ctx)
+      await showError(err, ctx)
     } else{
       let trackingsMessage;
       if (trackings.length == 0){
@@ -177,7 +225,7 @@ bot.command('suivis', async ctx => {
       await bot.telegram.sendMessage(
         ctx.chat.id,
         trackingsMessage,
-      ).catch(error => functions.error(error, ctx))
+      ).catch(error => showError(error, ctx))
     }
   })
 });
@@ -239,12 +287,13 @@ bot.on('text', async (ctx) => {
           message += "\n";
         });
 
-        callbackData = savingData.create({
-          user_id: ctx.chat.id,
-          number: shipmentData.idShip
-        })
 
         if (showingKeyboard){
+          callbackData = savingData.create({
+            user_id: ctx.chat.id,
+            number: shipmentData.idShip,
+            type: 'save'
+          })
           await bot.telegram.sendMessage(
             ctx.chat.id,
             message,
@@ -263,12 +312,25 @@ bot.on('text', async (ctx) => {
           ).catch(err3 => showError(err3, ctx));
         }
         else{
+          callbackData = savingData.create({
+            user_id: ctx.chat.id,
+            number: shipmentData.idShip,
+            type: 'delete'
+          })
           await bot.telegram.sendMessage(
             ctx.chat.id,
             message,
             {
               parse_mode: 'HTML',
               disable_web_page_preview: true,
+              "reply_markup":
+              {
+                "inline_keyboard": [
+                  [
+                    {"text": "Supprimer", "callback_data": callbackData, "hide": false},
+                  ],
+                ]
+              },
             },
           ).catch(error => showError(error, ctx));
         }
@@ -278,10 +340,29 @@ bot.on('text', async (ctx) => {
 });
 
 bot.action(
-  savingData.filter(),
+  savingData.filter({
+    type: 'save',
+  }),
   async (ctx) => {
     currentID = await savingData.parse(callbackData).number
     await ctx.scene.enter("setTrackingName");
+  }
+);
+
+bot.action(
+  savingData.filter({
+    type: 'delete',
+  }),
+  async (ctx) => {
+
+    let trackID = currentID = await savingData.parse(callbackData).number
+    await Tracking.deleteOne({number: trackID}, async function (err, dish) {
+      if (err){
+        await showError(err, ctx)
+      }
+    })
+    await ctx.deleteMessage().catch(error => showError(error, ctx));
+    await bot.telegram.sendMessage(ctx.chat.id, "Le suivi a été supprimé !").catch(error => showError(error, ctx))
   }
 );
 

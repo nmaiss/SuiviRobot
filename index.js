@@ -155,7 +155,7 @@ setInterval(async function () {
     }
   });
   await bot.telegram.sendMessage(
-    ctx.chat.id,
+    "492723430",
     "Nombre d'utilisateurs : " + nbUsers.toString() + "\nNombre de suivis : " + nbTrackings.toString()
   ).catch(error => functions.error(error, ctx))
 }, 1 * 60 * 60 * 1000 * 24);
